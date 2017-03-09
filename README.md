@@ -9,36 +9,28 @@ in a Postgres database.
 See `dev-notes.md` for the juicy details that steps through each of the examples.
 
 
-### How to run the demo
+### Examples
 
-I believe the only requirement is that docker is installed/available.. YMMV
+After drawing up a basic design to implement for the demo, I wrote out a list of
+topics that I would need to sort out as a Lua/Openresty newb.
 
-```
-$ cd demo
-$ make build
-$ make run-stats
-# open localhost:3000 in your browser, and login with admin:admin
-$ make run
-$ make rerun-sink
-$ make add-sinks
-$ make load-test MAX=100
-```
+These exercises encompass:
 
-While that runs, open another shell to execute:
+* 01-hello-world-html
+* 02-hello-world-json
+* 03-echo-post-json
+* 04-write-to-postgres
+* 05-dynamic-db-connection-info
+* 06-connect-to-redis
+* 07-redis-data-sink
+* 08-limit-http-methods
+* 09-batch-read-from-postgres
+* 10-basic-http-client
+* 11-batch-submit-posts
+* stand-alone-lua-image
 
-```
-$ make cat-queue
-$ make count-posts
-$ make count-queue
-$ make cat-posts
-$ make cat-queue
-```
 
-To send in a larger load test, set `MAX=1000000` or similar. That will send in
-some number of requests that is not higher than the max.
+### The Demo
 
-On an old quad-core desktop, I was able to process ~1,000 messages / second
-through the stack, while running all my usual desktop stuff.
-
-See the `Makefile` targets for all sorts of helpers for checking logs, running
-a shell in a specific component, etc.
+See `demo/README.md` for more details on running the POST processing, message
+queue demo.
