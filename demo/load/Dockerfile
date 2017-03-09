@@ -5,6 +5,8 @@ RUN /usr/local/openresty/luajit/bin/luarocks install luasocket
 RUN /usr/local/openresty/luajit/bin/luarocks install luasec
 RUN /usr/local/openresty/luajit/bin/luarocks install lua-cjson
 RUN /usr/local/openresty/luajit/bin/luarocks install httpclient
-ADD load-test.lua /src/
+RUN /usr/local/openresty/luajit/bin/luarocks install lua_cliargs
+ADD batch-posts.lua /src/batch-posts.lua
 WORKDIR /src/
-ENTRYPOINT /bin/sh
+ENTRYPOINT /usr/local/openresty/luajit/bin/luajit
+CMD ["batch-posts.lua"]

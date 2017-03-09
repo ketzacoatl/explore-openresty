@@ -1,3 +1,4 @@
+MAX ?= 1000
 build:
 	#docker build --tag=db:demo   --rm=true ./db
 	#docker build --tag=app:demo  --rm=true ./app
@@ -17,7 +18,7 @@ dev:
 	docker run -d --name sink  --net host -v `pwd`/sink/worker.lua:/src/ --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
 
 load-test:
-	docker run --rm -it --net host -v `pwd`/load/load-test.lua:/src/load-test.lua --entrypoint /usr/local/openresty/luajit/bin/luajit load:demo load-test.lua
+	docker run -it --net host --entrypoint /usr/local/openresty/luajit/bin/luajit load:demo batch-posts.lua --limit $(MAX)
 
 shell-app:
 	docker exec -it app /bin/sh
@@ -27,6 +28,9 @@ shell-sink:
 
 shell-redis:
 	docker exec -it redis redis-cli
+
+shell-loadt:
+	docker run --rm -it --net host -v `pwd`/load/load-test.lua:/src/load-test.lua --entrypoint /bin/sh load:demo
 
 clean:
 	docker stop db     || true
