@@ -48,9 +48,15 @@ reload:
 logs-app:
 	docker exec -it app tail -f /usr/local/openresty/nginx/error.log
 
+count-posts:
+	docker exec -it db psql -U postgres -d lua-app -c 'SELECT COUNT(*) FROM posts;'
+
 cat-posts:
 	docker exec -it db psql -U postgres -d lua-app -c 'SELECT * FROM posts;'
 
+count-queue:
+	docker exec -it redis redis-cli -c LLEN enqueued
+	docker exec -it redis redis-cli -c LLEN processing
 cat-queue:
 	docker exec -it redis redis-cli -c LRANGE enqueued 0 -1
 
