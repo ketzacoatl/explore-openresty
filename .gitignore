@@ -1,1 +1,2 @@
 *.sw[p,o]
+stats/data/[prometheus,grafana]/*
