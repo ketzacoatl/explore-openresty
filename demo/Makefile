@@ -1,20 +1,34 @@
 MAX ?= 1000
+PG_URL = "postgresql://postgres:password@127.0.0.1:5432/lua-app?sslmode=disable"
+PROM_CONF = "/etc/prometheus/prometheus.yml"
+PROM_DATA = "/prometheus"
+PROM_LOCAL= "stats/data/prometheus"
+GRAF_DATA = "/var/lib/grafana"
+GRAF_LOCAL= "stats/data/grafana"
+
 build:
 	docker build --tag=db:demo    --rm=true ./db
 	docker build --tag=app:demo   --rm=true ./app
 	docker build --tag=sink:demo  --rm=true ./sink
 	docker build --tag=load:demo  --rm=true ./load
 
+run-stats:
+	docker run -d --name nexp  --net host -p 127.0.0.1:9113:9113 fish/nginx-exporter -nginx.scrape_uri=http://127.0.0.0.8000/stats
+	docker run -d --name rexp  --net host -p 127.0.0.1:9121:9121 oliver006/redis_exporter -redis.addr=127.0.0.1:6379
+	docker run -d --name pexp  --net host -p 127.0.0.1:9187:9187 -e DATA_SOURCE_NAME=$(PG_URL) wrouesnel/postgres_exporter
+	docker run -d --name prom  --net host -p 127.0.0.1:9090:9090 -v `pwd`/prometheus.yml:$(PROM_CONF) -v `pwd`/$(PROM_LOCAL):$(PROM_DATA) prom/prometheus
+	docker run -d --name graf  --net host -p 127.0.0.1:3000:3000 -v `pwd`/$(GRAF_LOCAL):$(GRAF_DATA) grafana/grafana
+
 run:
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
-	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 app:demo
+	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 -p 127.0.0.1:9145:9145 app:demo
 	docker run -d --name redis --net host -p 127.0.0.1:6379:6379 redis:alpine
 	docker run -d --name sink  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
 
 dev:
 	docker run -d --name redis --net host -p 127.0.0.1:6379:6379 redis:alpine
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
-	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 -v `pwd`/app/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf app:demo
+	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 -p 127.0.0.1:9145:9145 -v `pwd`/app/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf app:demo
 	docker run -d --name sink  --net host -v `pwd`/sink/worker.lua:/src/ --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
 
 load-test:
@@ -42,6 +56,22 @@ clean:
 	docker rm   sink   || true
 	docker rm   redis  || true
 
+clean-stats:
+	docker stop graf   || true
+	docker stop prom   || true
+	docker stop nexp   || true
+	docker stop rexp   || true
+	docker stop pexp   || true
+	docker rm   graf   || true
+	docker rm   prom   || true
+	docker rm   nexp   || true
+	docker rm   rexp   || true
+	docker rm   pexp   || true
+
+rmrf-stats:
+	rm -rf stats/data/grafana/*
+	rm -rf stats/data/prometheus/*
+
 reload:
 	docker exec -it app /usr/local/openresty/nginx/sbin/nginx -s reload
 
@@ -57,6 +87,7 @@ cat-posts:
 count-queue:
 	docker exec -it redis redis-cli -c LLEN enqueued
 	docker exec -it redis redis-cli -c LLEN processing
+
 cat-queue:
 	docker exec -it redis redis-cli -c LRANGE enqueued 0 -1
 
