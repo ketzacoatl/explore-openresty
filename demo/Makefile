@@ -1,9 +1,9 @@
 MAX ?= 1000
 build:
-	#docker build --tag=db:demo   --rm=true ./db
-	#docker build --tag=app:demo  --rm=true ./app
-	#docker build --tag=sink:demo --rm=true ./sink
-	docker build --tag=load:demo --rm=true ./load
+	docker build --tag=db:demo    --rm=true ./db
+	docker build --tag=app:demo   --rm=true ./app
+	docker build --tag=sink:demo  --rm=true ./sink
+	docker build --tag=load:demo  --rm=true ./load
 
 run:
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
