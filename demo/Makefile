@@ -65,3 +65,13 @@ curl-msgs:
 rerun-sink:
 	docker rm sink
 	docker run -d --name sink  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
+
+add-sinks:
+	docker run -d --name sink1  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
+	docker run -d --name sink2  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
+
+rm-sinks:
+	docker stop sink1 || true
+	docker stop sink2 || true
+	docker rm   sink1 || true
+	docker rm   sink2 || true
