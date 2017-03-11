@@ -5,6 +5,9 @@ PROM_DATA = "/prometheus"
 PROM_LOCAL= "stats/data/prometheus"
 GRAF_DATA = "/var/lib/grafana"
 GRAF_LOCAL= "stats/data/grafana"
+LUAJIT    = "/usr/local/openresty/luajit/bin/luajit"
+NGINX_CONF= "/usr/local/openresty/nginx/conf/nginx.conf"
+NGINX_BIN = "/usr/local/openresty/nginx/sbin/nginx"
 
 build:
 	docker build --tag=db:demo    --rm=true ./db
@@ -23,16 +26,16 @@ run:
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
 	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 -p 127.0.0.1:9145:9145 app:demo
 	docker run -d --name redis --net host -p 127.0.0.1:6379:6379 redis:alpine
-	docker run -d --name sink  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
+	docker run -d --name sink  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
 
 dev:
 	docker run -d --name redis --net host -p 127.0.0.1:6379:6379 redis:alpine
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
-	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 -p 127.0.0.1:9145:9145 -v `pwd`/app/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf app:demo
-	docker run -d --name sink  --net host -v `pwd`/sink/worker.lua:/src/ --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
+	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 -p 127.0.0.1:9145:9145 -v `pwd`/app/nginx.conf:$(NGINX_CONF) app:demo
+	docker run -d --name sink  --net host -v `pwd`/sink/worker.lua:/src/ --entrypoint $(LUAJIT) sink:demo worker.lua
 
 load-test:
-	docker run -it --net host --entrypoint /usr/local/openresty/luajit/bin/luajit load:demo batch-posts.lua --limit $(MAX)
+	docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit $(MAX)
 
 shell-app:
 	docker exec -it app /bin/sh
@@ -73,7 +76,7 @@ rmrf-stats:
 	rm -rf stats/data/prometheus/*
 
 reload:
-	docker exec -it app /usr/local/openresty/nginx/sbin/nginx -s reload
+	docker exec -it app $(NGINX_BIN) -s reload
 
 logs-app:
 	docker exec -it app tail -f /usr/local/openresty/nginx/error.log
@@ -101,11 +104,11 @@ curl-msgs:
 
 rerun-sink:
 	docker rm sink
-	docker run -d --name sink  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
+	docker run -d --name sink  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
 
 add-sinks:
-	docker run -d --name sink1  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
-	docker run -d --name sink2  --net host --entrypoint /usr/local/openresty/luajit/bin/luajit sink:demo worker.lua
+	docker run -d --name sink1  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
+	docker run -d --name sink2  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
 
 rm-sinks:
 	docker stop sink1 || true
