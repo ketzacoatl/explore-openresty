@@ -42,7 +42,7 @@ run:
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
 	docker run -d --name app   --net host -p 127.0.0.1:8000:8000 -p 127.0.0.1:9145:9145 app:demo
 	docker run -d --name redis --net host -p 127.0.0.1:6379:6379 redis:alpine
-	docker run -d --name sink  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
+	docker run -d --name sink0 --net host --entrypoint $(LUAJIT) sink:demo worker.lua
 
 dev:
 	docker run -d --name redis --net host -p 127.0.0.1:6379:6379 redis:alpine
@@ -119,8 +119,8 @@ curl-msgs:
 	curl -i -H "Content-Type: application/json" localhost:8000/list
 
 rerun-sink:
-	docker rm sink
-	docker run -d --name sink  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
+	docker rm sink0
+	docker run -d --name sink0  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
 
 add-sinks:
 	docker run -d --name sink1  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
