@@ -16,6 +16,13 @@ get-node-exporter:
 	tar xzp --strip-components=1 -f node_exporter-0.13.0.linux-amd64.tar.gz node_exporter-0.13.0.linux-amd64/node_exporter
 	rm -rf node_exporter-0.13.0.linux-amd64.tar.gz
 
+pull:
+	#docker pull justwatchcom/sql_exporter
+	docker pull fish/nginx-exporter:latest
+	docker pull oliver006/redis_exporter:latest
+	docker pull prom/prometheus:latest
+	docker pull grafana/grafana:latest
+	docker pull redis:alpine
 
 build:
 	docker build --tag=db:demo    --rm=true ./db
