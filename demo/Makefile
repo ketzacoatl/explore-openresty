@@ -8,8 +8,6 @@ GRAF_LOCAL= "stats/data/grafana"
 LUAJIT    = "/usr/local/openresty/luajit/bin/luajit"
 NGINX_CONF= "/usr/local/openresty/nginx/conf/nginx.conf"
 NGINX_BIN = "/usr/local/openresty/nginx/sbin/nginx"
-NODE_STATS= "loadavg,netdev,meminfo,stat,vmstat"
-BLOCKED_IF= "^(lo|eth|tun)*$$"
 
 # download and extract the node_exporter executable from github so we can run it
 get-node-exporter:
@@ -40,7 +38,7 @@ run-stats:
 	docker run -d --name pexp  --net host -p 127.0.0.1:8080:8080 -v `pwd`/stats/sql_exporter.yml:/conf.yml -e CONFIG=/conf.yml sql_exporter:5e92c626
 	docker run -d --name prom  --net host -p 127.0.0.1:9090:9090 -v `pwd`/stats/prometheus.yml:$(PROM_CONF) -v `pwd`/$(PROM_LOCAL):$(PROM_DATA) prom/prometheus
 	docker run -d --name graf  --net host -p 127.0.0.1:3000:3000 -v `pwd`/$(GRAF_LOCAL):$(GRAF_DATA) grafana/grafana
-	./node_exporter -collectors.enabled "$(NODE_STATS)" -collector.netdev.ignored-devices $(BLOCKED_IF) &
+	./node_exporter -collectors.enabled "loadavg,netdev,meminfo,stat,vmstat" -collector.netdev.ignored-devices "^(lo|eth|tun)*$$" &
 	ps aux | grep node_exporter | head -n 1
 
 # run the webapp stack (lua/openresty, db, redis, worker/sink)
