@@ -52,7 +52,13 @@ dev:
 	docker run -d --name sink  --net host -v `pwd`/sink/worker.lua:/src/ --entrypoint $(LUAJIT) sink:demo worker.lua
 
 load-test:
-	docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit $(MAX)
+	time docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit $(MAX)
+
+load-test-min:
+	docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit 10 --list --exact
+
+load-test-1M:
+	time docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit 1000000 --exact
 
 shell-app:
 	docker exec -it app /bin/sh
