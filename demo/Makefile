@@ -26,7 +26,7 @@ build:
 run-stats:
 	docker run -d --name nexp  --net host -p 127.0.0.1:9113:9113 fish/nginx-exporter -nginx.scrape_uri=http://127.0.0.0.8000/stats
 	docker run -d --name rexp  --net host -p 127.0.0.1:9121:9121 oliver006/redis_exporter -redis.addr=127.0.0.1:6379
-	docker run -d --name pexp  --net host -p 127.0.0.1:9187:9187 -e DATA_SOURCE_NAME=$(PG_URL) wrouesnel/postgres_exporter
+	docker run -d --name pexp  --net host -p 127.0.0.1:8080:8080 -v `pwd`/stats/sql_exporter.yml:/conf.yml -e CONFIG=/conf.yml sql_exporter:5e92c626
 	docker run -d --name prom  --net host -p 127.0.0.1:9090:9090 -v `pwd`/stats/prometheus.yml:$(PROM_CONF) -v `pwd`/$(PROM_LOCAL):$(PROM_DATA) prom/prometheus
 	docker run -d --name graf  --net host -p 127.0.0.1:3000:3000 -v `pwd`/$(GRAF_LOCAL):$(GRAF_DATA) grafana/grafana
 	./node_exporter -collectors.enabled "$(NODE_STATS)" -collector.netdev.ignored-devices "$(BLOCKED_IF)"
