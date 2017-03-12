@@ -90,8 +90,9 @@ clean-stats:
 	pkill node_exporter || true
 
 rmrf-stats:
-	rm -rf stats/data/grafana/*
-	rm -rf stats/data/prometheus/*
+	#rm -rf stats/data/grafana/*
+	du -sh stats/data/prometheus/
+	sudo rm -rf stats/data/prometheus/*
 
 reload:
 	docker exec -it app $(NGINX_BIN) -s reload
