@@ -65,6 +65,10 @@ load-test:
 load-test-min:
 	docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit 10 --list --exact
 
+# run a much bigger test, 100K messages
+load-test-100K:
+	time docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit 100000  --exact
+
 # run a more massive test, 1 Million messages
 load-test-1M:
 	time docker run -it --net host --entrypoint $(LUAJIT) load:demo batch-posts.lua --limit 1000000 --exact
