@@ -8,6 +8,7 @@ local date_fmt    = '%m-%d-%Y--%H-%M-%S'
 -- cli args, parsing, and help docs
 cli:option('--limit=NUMBER', 'max number of posts to send', 100)
 cli:option('--url=HTTP_URL', 'URL to POST messages to', default_url)
+cli:flag('--exact', 'send `--limit` number of posts', false)
 cli:flag('--list', 'hit the list endpoint to retrieve the latest posts', false)
 --
 -- auto-gen some JSON to send as a post/message
@@ -48,13 +49,20 @@ if err then
   print(err)
   os.exit(0)
 end
---
+-- use --limit or generate a pseudorandom number below limit
+if args.exact then
+  print('--exact enabled, will use --limit as the number of posts to send')
+  i = tonumber(args.limit)
+else
+  print('--exact disabled, pick a pseudo-random number up to --limit')
+  min = (args.limit * 0.5)
+  i = math.random(min, args.limit)
+end
 print('Let us post a bunch of messages to the service:')
-i = math.random(0, args.limit)
 print('We will print ' .. i .. ' messages this time..')
 batch_send(args.url, i)
 
-
+-- list mode
 if args.list then
   print('Let us retrieve the top posts saved/written to the service:')
   posts = get_posts(args.url .. '/list').body
