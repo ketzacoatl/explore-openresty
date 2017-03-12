@@ -8,6 +8,14 @@ GRAF_LOCAL= "stats/data/grafana"
 LUAJIT    = "/usr/local/openresty/luajit/bin/luajit"
 NGINX_CONF= "/usr/local/openresty/nginx/conf/nginx.conf"
 NGINX_BIN = "/usr/local/openresty/nginx/sbin/nginx"
+NODE_STATS= "loadavg,netdev,meminfo,stat,vmstat"
+BLOCKED_IF= "^(lo|eth|tun)*$"
+
+get-node-exporter:
+	wget https://github.com/prometheus/node_exporter/releases/download/v0.13.0/node_exporter-0.13.0.linux-amd64.tar.gz
+	tar xzp --strip-components=1 -f node_exporter-0.13.0.linux-amd64.tar.gz node_exporter-0.13.0.linux-amd64/node_exporter
+	rm -rf node_exporter-0.13.0.linux-amd64.tar.gz
+
 
 build:
 	docker build --tag=db:demo    --rm=true ./db
@@ -21,6 +29,7 @@ run-stats:
 	docker run -d --name pexp  --net host -p 127.0.0.1:9187:9187 -e DATA_SOURCE_NAME=$(PG_URL) wrouesnel/postgres_exporter
 	docker run -d --name prom  --net host -p 127.0.0.1:9090:9090 -v `pwd`/stats/prometheus.yml:$(PROM_CONF) -v `pwd`/$(PROM_LOCAL):$(PROM_DATA) prom/prometheus
 	docker run -d --name graf  --net host -p 127.0.0.1:3000:3000 -v `pwd`/$(GRAF_LOCAL):$(GRAF_DATA) grafana/grafana
+	./node_exporter -collectors.enabled "$(NODE_STATS)" -collector.netdev.ignored-devices "$(BLOCKED_IF)"
 
 run:
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
