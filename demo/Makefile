@@ -9,7 +9,7 @@ LUAJIT    = "/usr/local/openresty/luajit/bin/luajit"
 NGINX_CONF= "/usr/local/openresty/nginx/conf/nginx.conf"
 NGINX_BIN = "/usr/local/openresty/nginx/sbin/nginx"
 NODE_STATS= "loadavg,netdev,meminfo,stat,vmstat"
-BLOCKED_IF= "^(lo|eth|tun)*$"
+BLOCKED_IF= "^(lo|eth|tun)*$$"
 
 get-node-exporter:
 	wget https://github.com/prometheus/node_exporter/releases/download/v0.13.0/node_exporter-0.13.0.linux-amd64.tar.gz
@@ -36,7 +36,8 @@ run-stats:
 	docker run -d --name pexp  --net host -p 127.0.0.1:8080:8080 -v `pwd`/stats/sql_exporter.yml:/conf.yml -e CONFIG=/conf.yml sql_exporter:5e92c626
 	docker run -d --name prom  --net host -p 127.0.0.1:9090:9090 -v `pwd`/stats/prometheus.yml:$(PROM_CONF) -v `pwd`/$(PROM_LOCAL):$(PROM_DATA) prom/prometheus
 	docker run -d --name graf  --net host -p 127.0.0.1:3000:3000 -v `pwd`/$(GRAF_LOCAL):$(GRAF_DATA) grafana/grafana
-	./node_exporter -collectors.enabled "$(NODE_STATS)" -collector.netdev.ignored-devices "$(BLOCKED_IF)"
+	./node_exporter -collectors.enabled "$(NODE_STATS)" -collector.netdev.ignored-devices $(BLOCKED_IF) &
+	ps aux | grep node_exporter | head -n 1
 
 run:
 	docker run -d --name db    --net host -p 127.0.0.1:5342:5432 db:demo
@@ -76,16 +77,17 @@ clean:
 	docker rm   redis  || true
 
 clean-stats:
-	docker stop graf   || true
-	docker stop prom   || true
-	docker stop nexp   || true
-	docker stop rexp   || true
-	docker stop pexp   || true
-	docker rm   graf   || true
-	docker rm   prom   || true
-	docker rm   nexp   || true
-	docker rm   rexp   || true
-	docker rm   pexp   || true
+	docker stop graf    || true
+	docker stop prom    || true
+	docker stop nexp    || true
+	docker stop rexp    || true
+	docker stop pexp    || true
+	docker rm   graf    || true
+	docker rm   prom    || true
+	docker rm   nexp    || true
+	docker rm   rexp    || true
+	docker rm   pexp    || true
+	pkill node_exporter || true
 
 rmrf-stats:
 	rm -rf stats/data/grafana/*
