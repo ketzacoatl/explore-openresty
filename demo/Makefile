@@ -125,9 +125,12 @@ rerun-sink:
 add-sinks:
 	docker run -d --name sink1  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
 	docker run -d --name sink2  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
+	docker run -d --name sink3  --net host --entrypoint $(LUAJIT) sink:demo worker.lua
 
 rm-sinks:
 	docker stop sink1 || true
 	docker stop sink2 || true
+	docker stop sink3 || true
 	docker rm   sink1 || true
 	docker rm   sink2 || true
+	docker rm   sink3 || true
