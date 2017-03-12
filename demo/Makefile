@@ -117,7 +117,7 @@ clean-stats:
 # rm -rf prometheus stats data
 rmrf-stats:
 	#rm -rf stats/data/grafana/*
-	du -sh stats/data/prometheus/
+	sudo du -sh stats/data/prometheus/
 	sudo rm -rf stats/data/prometheus/*
 
 # reload nginx inside the webapp (helpful when in dev mode)
