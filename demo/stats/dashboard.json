@@ -6,13 +6,13 @@
   "gnetId": null,
   "graphTooltip": 0,
   "hideControls": false,
-  "id": 10,
+  "id": 11,
   "links": [],
-  "refresh": false,
+  "refresh": "5s",
   "rows": [
     {
       "collapse": false,
-      "height": -2277,
+      "height": -2659,
       "panels": [
         {
           "cacheTimeout": null,
@@ -86,7 +86,7 @@
               "legendFormat": "",
               "metric": "",
               "refId": "A",
-              "step": 4,
+              "step": 20,
               "target": ""
             }
           ],
@@ -164,7 +164,7 @@
               "intervalFactor": 2,
               "legendFormat": "",
               "refId": "A",
-              "step": 4
+              "step": 20
             }
           ],
           "thresholds": "",
@@ -238,7 +238,7 @@
               "expr": "redis_connected_clients{host=\"demo\"}",
               "intervalFactor": 2,
               "refId": "A",
-              "step": 4
+              "step": 20
             }
           ],
           "thresholds": "",
@@ -312,7 +312,7 @@
               "expr": "sql_connections{database=\"lua-app\",host=\"demo\",service=\"postgres\"}",
               "intervalFactor": 2,
               "refId": "A",
-              "step": 4
+              "step": 20
             }
           ],
           "thresholds": "",
@@ -346,7 +346,7 @@
             "thresholdLabels": false,
             "thresholdMarkers": true
           },
-          "id": 12,
+          "id": 26,
           "interval": null,
           "links": [],
           "mappingType": 1,
@@ -374,7 +374,7 @@
               "to": "null"
             }
           ],
-          "span": 7,
+          "span": 1,
           "sparkline": {
             "fillColor": "rgba(31, 118, 189, 0.18)",
             "full": false,
@@ -382,10 +382,15 @@
             "show": false
           },
           "targets": [
-            {}
+            {
+              "expr": "sql_msg_count{col=\"msg_count\",database=\"lua-app\",driver=\"postgres\",sql_job=\"lua-app\"}",
+              "intervalFactor": 2,
+              "refId": "A",
+              "step": 20
+            }
           ],
           "thresholds": "",
-          "title": "Panel Title",
+          "title": "MSG in DB",
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -402,7 +407,7 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": false,
-      "title": "",
+      "title": "Row title",
       "titleSize": "h6"
     },
     {
@@ -454,7 +459,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "HTTP Responses",
+          "title": "HTTP Responses / Second",
           "tooltip": {
             "msResolution": false,
             "shared": true,
@@ -604,7 +609,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 6,
+          "span": 4,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -682,7 +687,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 6,
+          "span": 4,
           "stack": true,
           "steppedLine": false,
           "targets": [
@@ -731,6 +736,76 @@
               "show": true
             }
           ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "fill": 1,
+          "id": 24,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "rate(sql_msg_count{}[1m])",
+              "intervalFactor": 2,
+              "refId": "A",
+              "step": 2
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "MSG / Second in DB",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
         }
       ],
       "repeat": null,
@@ -742,7 +817,7 @@
     },
     {
       "collapse": false,
-      "height": 179,
+      "height": 254,
       "panels": [
         {
           "cacheTimeout": null,
@@ -805,7 +880,7 @@
               "hide": false,
               "intervalFactor": 2,
               "refId": "A",
-              "step": 4,
+              "step": 20,
               "target": ""
             }
           ],
@@ -865,7 +940,7 @@
               "legendFormat": "Used",
               "metric": "memo",
               "refId": "A",
-              "step": 2,
+              "step": 4,
               "target": ""
             },
             {
@@ -873,14 +948,14 @@
               "intervalFactor": 2,
               "legendFormat": "Buffers",
               "refId": "C",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "node_memory_Cached{instance=~\"$node\"} + node_memory_Slab{instance=~\"$node\"}",
               "intervalFactor": 2,
               "legendFormat": "Cached",
               "refId": "D",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "node_memory_MemFree{instance=~\"$node\"}",
@@ -888,7 +963,7 @@
               "intervalFactor": 2,
               "legendFormat": "Free",
               "refId": "B",
-              "step": 2
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -974,7 +1049,7 @@
               "legendFormat": "load",
               "metric": "",
               "refId": "A",
-              "step": 2,
+              "step": 4,
               "target": ""
             }
           ],
@@ -1059,7 +1134,7 @@
               "legendFormat": "context switches",
               "metric": "",
               "refId": "A",
-              "step": 2,
+              "step": 4,
               "target": ""
             }
           ],
@@ -1148,7 +1223,7 @@
               "legendFormat": "{{mode}}",
               "metric": "",
               "refId": "A",
-              "step": 2,
+              "step": 4,
               "target": ""
             },
             {
@@ -1157,7 +1232,7 @@
               "intervalFactor": 2,
               "legendFormat": "user",
               "refId": "B",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "sum by (mode)(irate(node_cpu{mode='nice',instance=~'$node'}[5m]))",
@@ -1165,7 +1240,7 @@
               "intervalFactor": 2,
               "legendFormat": "nice",
               "refId": "C",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "sum by (mode)(irate(node_cpu{mode='iowait',instance=~'$node'}[5m]))",
@@ -1173,14 +1248,14 @@
               "intervalFactor": 2,
               "legendFormat": "iowait",
               "refId": "E",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "sum by (mode)(irate(node_cpu{mode='steal',instance=~'$node'}[5m]))",
               "intervalFactor": 2,
               "legendFormat": "steal",
               "refId": "H",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "sum by (mode)(irate(node_cpu{mode='idle',instance=~'$node'}[5m]))",
@@ -1188,7 +1263,7 @@
               "intervalFactor": 2,
               "legendFormat": "idle",
               "refId": "D",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "sum by (mode)(irate(node_cpu{mode='irq',instance=~'$node'}[5m]))",
@@ -1196,7 +1271,7 @@
               "intervalFactor": 2,
               "legendFormat": "irq",
               "refId": "F",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "sum by (mode)(irate(node_cpu{mode='softirq',instance=~'$node'}[5m]))",
@@ -1204,7 +1279,7 @@
               "intervalFactor": 2,
               "legendFormat": "softirq",
               "refId": "G",
-              "step": 2
+              "step": 4
             },
             {
               "expr": "sum by (mode)(irate(node_cpu{mode='guest',instance=~'$node'}[5m]))",
@@ -1212,7 +1287,7 @@
               "intervalFactor": 2,
               "legendFormat": "guest",
               "refId": "I",
-              "step": 2
+              "step": 4
             }
           ],
           "thresholds": [
@@ -1310,7 +1385,7 @@
               "legendFormat": "{{device}}_in",
               "metric": "",
               "refId": "A",
-              "step": 2,
+              "step": 4,
               "target": ""
             },
             {
@@ -1319,7 +1394,7 @@
               "intervalFactor": 2,
               "legendFormat": "{{device}}_out",
               "refId": "B",
-              "step": 2
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1690,7 +1765,7 @@
     ]
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -1720,5 +1795,5 @@
   },
   "timezone": "browser",
   "title": "DEMO",
-  "version": 19
+  "version": 0
 }
