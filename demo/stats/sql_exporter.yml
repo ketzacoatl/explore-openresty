@@ -1,7 +1,7 @@
 ---
 jobs:
 - name: "global"
-  interval: '5m'
+  interval: '5s'
   connections:
   - 'postgres://postgres:password@127.0.0.1:5432/lua-app?sslmode=disable'
   queries:
@@ -25,7 +25,7 @@ jobs:
             SELECT datname::text AS dbname, pg_database_size(datname)::float AS dbsize
             FROM pg_database;
 - name: "lua-app"
-  interval: '5m'
+  interval: '5s'
   connections:
   - 'postgres://postgres:password@127.0.0.1:5432/lua-app?sslmode=disable'
   queries:
