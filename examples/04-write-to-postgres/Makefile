@@ -1,6 +1,6 @@
 build:
-	docker build --tag=db  --rm=true ./db
-	docker build --tag=app --rm=true ./app
+	docker build --tag=db:4  --rm=true ./db
+	docker build --tag=app:4 --rm=true ./app
 
 # add "-v `pwd`/app:/usr/local/openresty/nginx/conf/" to the app for local dev
 run:
