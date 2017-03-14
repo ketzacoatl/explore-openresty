@@ -98,6 +98,6 @@ jobs:
     help: "Number of messages in the posts table"
     values:
       - "msg_count"
-    query: "SELECT COUNT(*)::float FROM posts;"
+    query: "SELECT COUNT(*) AS msg_count FROM posts;"
 
 
