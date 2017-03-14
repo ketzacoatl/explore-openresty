@@ -3419,6 +3419,7 @@ Hell, if we're going to send in 1M requests to stress test the system, why not p
   * [nginx-exporter](https://github.com/discordianfish/nginx_exporter) - [docker](https://hub.docker.com/r/fish/nginx-exporter/)
   * [redis-exporter](https://github.com/oliver006/redis_exporter) - [docker]()
   * [postgres-exporter](https://github.com/wrouesnel/postgres_exporter) - `wrouesnel/postgres_exporter` (docker image)
+    * note: after using the `postgres_exporter` a bit, I eventually opted to swap this component for the super-new but simpler and more generic/flexible [sql_exporter](https://github.com/justwatchcom/sql_exporter)
 * [Nginx (lua) Stats Module](https://github.com/knyar/nginx-lua-prometheus) - setup stats reporting for nginx, scrable by Prometheus
 * Grafana Dashboards:
   * [nginx](https://grafana.net/dashboards/462)
@@ -3795,7 +3796,6 @@ After the stats stack is running, there are a few additional steps:
 - see stats when running the benchmarks
 
 
-
 ------
 
 Time Tracking: since last check: 5 hours;   total: 23.5 hours
@@ -3804,7 +3804,261 @@ Time Tracking: since last check: 5 hours;   total: 23.5 hours
 
 
 
-### Where to go from here?
+## Where to go from here?
 
-* build a dashboard for postgres/redis/nginx stats all in one place (those stats relevant to the demo)
-* worker could push stats to prometheus' push-gateway
+The following is a list of improvements that could be made:
+
+* stats/metrics
+  * build a dashboard for postgres/redis/nginx stats all in one place (those stats relevant to the demo)
+  * worker could push stats to prometheus' push-gateway
+  * get better/more relevant stats from Postgres (it'd be nice to see the number of MSG in the db)
+* improve the worker/sink
+  * reconnect if the database connection fails
+  * if the queue is empty, improve how the sinks decide when to check-in with the queue - eg, if there are 10k messages, we want the sinks to process those messages as fast as possible, with as little delay as possible.. but if there are no messages in the queue, we don't want the sinks to add unnecessary load to redis or the hosts they run on - if there's no work to do, don't do any.
+* service discovery
+  * use Consul - have services register themselves with Consul, put health checks in place
+  * have services lookup other services in Consul
+  * have services respond to changes when their dependents come and go
+* HA for the redis master/datastore
+
+
+## Get Better Stats from Postgres
+
+Up until this point, displaying stats in Grafana has worked well for redis, and nginx, but not postgres. Fiddling with the few knobs available didn't help much (though I was mostly limited by not knowing a lot about the finer points of dashboards in Grafana and not having a lot of time to spend with this).
+
+Eventually, I ran into a new option, [`sql_exporter`](https://github.com/justwatchcom/sql_exporter/), which is simpler and more flexible than the `postgres_exporter` I tried first. There is also the [prometheus_sql_exporter](https://github.com/weaveworks/prometheus_sql_exporter), but it only supports guages. `sql_exporter` also has a nice looking dashboard I'd like to see running here. Let's give it a shot.
+
+
+
+### Setting up `sql_exporter`
+
+At the time of this writing, `sql_exporter` is a new project, and the Docker image is not yet publicly available, so we'll need to build it ourselves.
+
+Grab the source:
+
+```
+ᐅ git clone https://github.com/justwatchcom/sql_exporter
+Cloning into 'sql_exporter'...
+remote: Counting objects: 316, done.
+remote: Compressing objects: 100% (262/262), done.
+remote: Total 316 (delta 36), reused 313 (delta 33), pack-reused 0
+Receiving objects: 100% (316/316), 1.05 MiB | 442.00 KiB/s, done.
+Resolving deltas: 100% (36/36), done.
+Checking connectivity... done.
+```
+
+Build the image:
+
+```
+ᐅ cd sql_exporter
+ᐅ make docker-image
+docker build -t sql_exporter-test:5e92c626 -f Dockerfile.test .
+Sending build context to Docker daemon 6.087 MB
+Step 1 : FROM golang:1.8-alpine
+1.8-alpine: Pulling from library/golang
+
+71cd30f567a6: Pull complete
+6e716217cb1b: Pull complete
+...
+Removing intermediate container e82174658395
+Successfully built 1d34a3d0efe5
+if [ -f sql_exporter ]; then rm -f sql_exporter ; fi
+docker run -i -v `pwd`:/go/src/github.com/sql_exporter -w /go/src/github.com/sql_exporter sql_exporter-test:5e92c626 make sql_exporter
+CGO_ENABLED=0 GO15VENDOREXPERIMENT=1 go build -a -tags netgo -o sql_exporter -ldflags "-extldflags '-static' -s -w -X main.Version=git -X main.BuildTime=`date +%FT%T%z` -X m
+ain.Commit=5e92c626"
+docker build -t sql_exporter:5e92c626 -f Dockerfile .
+Sending build context to Docker daemon 12.93 MB
+Step 1 : FROM alpine:latest
+ ---> fe3e188d9166
+Step 2 : RUN apk --update add   ca-certificates   && rm -rf /var/cache/apk/*   && update-ca-certificates
+ ---> Running in bf1e12ed348b
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.5/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.5/community/x86_64/APKINDEX.tar.gz
+(1/1) Installing ca-certificates (20161130-r0)
+Executing busybox-1.25.1-r0.trigger
+Executing ca-certificates-20161130-r0.trigger
+OK: 5 MiB in 12 packages
+WARNING: ca-certificates.crt does not contain exactly one certificate or CRL: skipping
+ ---> 3ba4b87c41a9
+Removing intermediate container bf1e12ed348b
+Step 3 : ADD sql_exporter /usr/local/bin/sql_exporter
+ ---> 12cf9e7e2f9a
+Removing intermediate container b4a303963961
+Step 4 : ENTRYPOINT /usr/local/bin/sql_exporter
+ ---> Running in 4ef96308f3bc
+ ---> 39b46d5f7f8f
+Removing intermediate container 4ef96308f3bc
+Step 5 : EXPOSE 8080
+ ---> Running in 0c16714b9a22
+ ---> 08395608e943
+Removing intermediate container 0c16714b9a22
+Successfully built 08395608e943
+```
+
+We should now see two images, one for runtime and another for tests/dev/etc:
+
+```
+ᐅ docker images | head
+REPOSITORY                                               TAG                                        IMAGE ID            CREATED             VIRTUAL SIZE
+sql_exporter                                             5e92c626                                   08395608e943        18 minutes ago      11.46 MB
+sql_exporter-test                                        5e92c626                                   1d34a3d0efe5        18 minutes ago      467.8 MB
+```
+
+In the future, these two steps won't be needed, as the developers will likely push a Docker image to the public registry.
+
+
+
+### Config for sql_exporter
+
+I grabbed the upstream config and modified it, saving that to `stats/sql_exporter.yml` with the following:
+
+```
+---
+jobs:
+- name: "global"
+  interval: '5s'
+  connections:
+  - 'postgres://postgres:password@127.0.0.1:5432/lua-app?sslmode=disable'
+  queries:
+  - name: "running_queries"
+    help: "Number of running queries"
+    labels:
+      - "datname"
+      - "usename"
+    values:
+      - "count"
+    query:  |
+            SELECT datname::text, usename::text, COUNT(*)::float AS count
+            FROM pg_stat_activity GROUP BY datname, usename;
+  - name: "db_sizes"
+    help: "Database Sizes"
+    labels:
+      - "dbname"
+    values:
+      - "dbsize"
+    query:  |
+            SELECT datname::text AS dbname, pg_database_size(datname)::float AS dbsize
+            FROM pg_database;
+- name: "lua-app"
+  interval: '5s'
+  connections:
+  - 'postgres://postgres:password@127.0.0.1:5432/lua-app?sslmode=disable'
+  queries:
+  - name: "pg_stat_user_tables"
+    help: "Table stats"
+    labels:
+      - "schemaname"
+      - "relname"
+    values:
+      - "seq_scan"
+      - "seq_tup_read"
+      - "idx_scan"
+      - "idx_tup_fetch"
+      - "n_tup_ins"
+      - "n_tup_upd"
+      - "n_tup_del"
+      - "n_tup_hot_upd"
+      - "n_live_tup"
+      - "n_dead_tup"
+      - "vacuum_count"
+      - "autovacuum_count"
+      - "analyze_count"
+      - "autoanalyze_count"
+    query:  |
+            SELECT
+              schemaname::text
+            , relname::text
+            , seq_scan::float
+            , seq_tup_read::float
+            , idx_scan::float
+            , idx_tup_fetch::float
+            , n_tup_ins::float
+            , n_tup_upd::float
+            , n_tup_del::float
+            , n_tup_hot_upd::float
+            , n_live_tup::float
+            , n_dead_tup::float
+            , vacuum_count::float
+            , autovacuum_count::float
+            , analyze_count::float
+            , autoanalyze_count::float
+            FROM pg_stat_user_tables;
+  - name: "pg_statio_user_tables"
+    help: "IO Stats"
+    labels:
+      - "schemaname"
+      - "relname"
+    values:
+      - "heap_blks_read"
+      - "heap_blks_hit"
+      - "idx_blks_read"
+      - "idx_blks_hit"
+    query:  |
+            SELECT
+              schemaname::text
+            , relname::text
+            , heap_blks_read::float
+            , heap_blks_hit::float
+            , idx_blks_read::float
+            , idx_blks_hit::float
+            FROM pg_statio_user_tables;
+  # this should map to the SQL Conenctions query in the grafana databoard
+  - name: "connections"
+    help: "Active Connections"
+    values:
+      - "connections_count"
+    query: "SELECT sum(numbackends)::float FROM pg_stat_database;"
+  # count number of messages in the lua-app db
+  - name: "msg_count"
+    help: "Number of messages in the posts table"
+    values:
+      - "msg_count"
+    query: "SELECT COUNT(*) AS msg_count FROM posts;"
+```
+
+We can now run this tool with our docker image like:
+
+```
+docker run -d --name pexp  --net host -p 127.0.0.1:8080:8080 -v `pwd`/stats/sql_exporter.yml:/conf.yml -e CONFIG=/conf.yml sql_exporter:5e92c626
+```
+
+And we can integrate that into the `Makefile` in place of the `postgres_exporter`.
+
+We can use Prometheus' built-in graph to confirm this works as expected by querying `sql_connections`, `sql_msg_count`, or any of the other stats seen as `sql_*`.
+
+
+
+#### `bin/watch-db-stats.sh`
+
+While working with `sql_exporter`, I added `bin/watch-db-stats.sh` to compare the results seen through Prometheus against what I see in the database in real-time. As a script, it is nothing special:
+
+```shell
+#!/bin/sh
+watch -n 1 "make count-queue && make count-posts"
+```
+
+but it's nice to have those stats in the CLI:
+
+```
+Every 1.0s: make count-queue && make count-posts
+
+docker exec -it redis redis-cli -c LLEN enqueued
+(integer) 341977r
+docker exec -it redis redis-cli -c LLEN processing
+(integer) 2
+docker exec -it db psql -U postgres -d lua-app -c 'SELECT COUNT(*) FROM posts;'
+  count
+  ----------
+   11650672
+   (1 row)
+```
+
+
+
+## Other / Incomplete Updates
+
+
+
+### Auto-load Dashboards into Grafana
+
+See the `grafana ` branch on the git repo.
