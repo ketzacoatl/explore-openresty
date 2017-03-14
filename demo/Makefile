@@ -95,7 +95,7 @@ clean:
 	docker stop redis  || true
 	docker rm   db     || true
 	docker rm   app    || true
-	docker rm   sink   || true
+	docker rm   sink0  || true
 	docker rm   redis  || true
 
 # stop and rm the docker containers running the stats/metrics stack
