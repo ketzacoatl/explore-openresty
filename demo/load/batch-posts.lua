@@ -35,7 +35,7 @@ batch_send = function (url, limit)
     if res.code == 200 then
       print('POST success! ' .. res.body)
     else
-      print('non-200 return! ' .. res.code .. ' ' .. res.err)
+      print('non-200 return! ' .. tostring(res.code) .. ' ' .. res.err)
     end
     count = count+1
   end
