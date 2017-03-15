@@ -28,7 +28,7 @@ end
 -- our primary loop
 batch_send = function (url, limit)
   count = 1 -- first is first
-  while (count < limit )
+  while (count <= limit )
   do
     msg = generate_post(count)
     res = send_post(url, msg)
